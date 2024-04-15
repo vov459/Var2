@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # Сервис для SQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - SA_PASSWORD=********
+      - ACCEPT_EULA=Y
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    networks:
+      backend:
+        ipv4_address: 172.16.100.11
+
+  # Сервис для веб-приложения .NET
+  app:
+    build:
+      context: C:/Users/test/Desktop/TP/вариант_1/SalCalc/
+      dockerfile: ./SalCalc/Dockerfile  # Путь к Dockerfile относительно контекста сборки
+    ports:
+      - "8080:80"
+    depends_on:
+      - sqlserver
+    networks:
+      backend:
+        ipv4_address: 172.16.100.10
+    volumes:
+      - C:/Users/test/Desktop/TP/вариант_1/SalCalc/SalCalc/bin/Debug/net6.0/:/var/opt/app  # Путь к собранным файлам .NET
+    entrypoint: ["dotnet", "/var/opt/app/SalCalc.dll"]
+
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.16.100.0/24"
+
+volumes:
+  sql_data:
